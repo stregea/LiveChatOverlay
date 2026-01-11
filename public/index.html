@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080">
+  <title>Live Chat Overlay</title>
+  <link rel="stylesheet" href="/css/overlay.css">
+  <link rel="stylesheet" href="/themes/neon.css" id="theme-link">
+</head>
+<body>
+  <div id="chat-container">
+    <!-- Chat messages will be dynamically inserted here -->
+  </div>
+
+  <!-- Audio elements for sound effects -->
+  <audio id="message-sound" preload="auto">
+    <source src="/sounds/message.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Twemoji library for emoji rendering -->
+  <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
+
+  <!-- Overlay modules -->
+  <script src="/js/modules/overlayWebSocket.js"></script>
+  <script src="/js/modules/configManager.js"></script>
+  <script src="/js/modules/messageRenderer.js"></script>
+  <script src="/js/modules/messageQueue.js"></script>
+
+  <!-- Platform client libraries -->
+  <script src="/js/lib/youtube.js"></script>
+  <script src="/js/lib/twitch.js"></script>
+
+  <!-- Main overlay application -->
+  <script src="/js/overlay.js?v=20250108b"></script>
+</body>
+</html>
+

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Overlay Control Panel</title>
+  <link rel="stylesheet" href="/css/control.css">
+</head>
+<body>
+  <div class="control-panel">
+    <header>
+      <h1>🎥 Live Chat Overlay Control Panel</h1>
+      <div class="status" id="status" title="Server connection status (not platform connections)">
+        <span class="status-indicator" id="status-indicator"></span>
+        <span id="status-text">Server: Disconnected</span>
+      </div>
+    </header>
+
+    <div class="panel-grid">
+      <!-- Connection Settings -->
+      <section class="panel-section">
+        <h2>🔌 Connection (Multistream Support)</h2>
+
+        <!-- YouTube Connection -->
+        <div class="platform-connection">
+          <h3>🎥 YouTube</h3>
+
+          <div class="form-group">
+            <label for="youtube-channel-id">Channel ID (from config.js)</label>
+            <input type="text" id="youtube-channel-id" placeholder="Set in config.js" disabled style="background: #f5f5f5; color: #333;">
+            <small>Channel ID: <strong id="config-channel-id" style="color: #666;">Loading...</strong></small>
+          </div>
+
+          <div class="form-group">
+            <label for="youtube-video-id">YouTube Video ID</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="youtube-video-id" placeholder="dQw4w9WgXcQ" style="flex: 1;">
+              <button class="btn btn-auto-detect" onclick="autoDetectLiveStream()" title="Auto-detect current live stream">
+                🔍 Auto-detect
+              </button>
+            </div>
+            <small>Manual entry or click Auto-detect to find current live stream</small>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-primary" onclick="connectYouTube()">Connect YouTube</button>
+            <button class="btn btn-secondary" onclick="disconnectYouTube()">Disconnect</button>
+          </div>
+          <div class="status-badge" id="youtube-status">Not connected</div>
+          <div class="auto-detect-info" id="auto-detect-info" style="display:none; margin-top: 8px; font-size: 13px;">
+            <!-- Auto-detect status will appear here -->
+          </div>
+        </div>
+
+        <!-- Twitch Connection -->
+        <div class="platform-connection">
+          <h3>🟣 Twitch</h3>
+          <div class="form-group">
+            <label for="twitch-channel">Twitch Channel</label>
+            <input type="text" id="twitch-channel" placeholder="channelname">
+            <small>Your Twitch channel name (lowercase)</small>
+          </div>
+          <div class="button-group">
+            <button class="btn btn-primary" onclick="connectTwitch()">Connect Twitch</button>
+            <button class="btn btn-secondary" onclick="disconnectTwitch()">Disconnect</button>
+          </div>
+          <div class="status-badge" id="twitch-status">Not connected</div>
+        </div>
+
+        <div class="multistream-info" id="multistream-info" style="display:none;">
+          <strong>📡 Multistream Active</strong> - Both platforms connected
+        </div>
+
+        <div style="margin-top: 16px; text-align: center;">
+          <button class="btn btn-danger" onclick="disconnectAll()" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white;">
+            🔌 Disconnect All Platforms
+          </button>
+        </div>
+      </section>
+
+      <!-- Display Settings -->
+      <section class="panel-section">
+        <h2>👤 User Info</h2>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="show-username" checked>
+            Show username
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="show-avatar" checked>
+            Show user avatar
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="avatar-shape">Avatar shape</label>
+          <select id="avatar-shape">
+            <option value="circle">Circle</option>
+            <option value="square">Square</option>
+            <option value="rounded">Rounded Square</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="show-platform-icon" checked>
+            Show platform icon
+          </label>
+        </div>
+      </section>
+
+      <!-- Theme Settings -->
+      <section class="panel-section">
+        <h2>🎨 Theme</h2>
+        <div class="form-group">
+          <label for="theme">Theme</label>
+          <select id="theme">
+            <option value="neon">Neon</option>
+            <option value="cozy">Cozy</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="bg-color">Background Color</label>
+          <input type="color" id="bg-color" value="#000000">
+          <label for="bg-opacity">Opacity</label>
+          <input type="range" id="bg-opacity" min="0" max="100" value="55">
+          <small>Opacity: <span id="bg-opacity-value">55</span>%</small>
+        </div>
+        <div class="form-group">
+          <label for="border-radius">Border Radius</label>
+          <input type="range" id="border-radius" min="0" max="30" value="18">
+          <small><span id="border-radius-value">18</span>px</small>
+        </div>
+      </section>
+
+      <!-- Animation Settings -->
+      <section class="panel-section">
+        <h2>🎞️ Animation</h2>
+        <div class="form-group">
+          <label for="max-messages">Max Messages</label>
+          <input type="range" id="max-messages" min="1" max="10" value="6">
+          <small><span id="max-messages-value">6</span> messages</small>
+        </div>
+        <div class="form-group">
+          <label for="animation-speed">Animation Speed</label>
+          <input type="range" id="animation-speed" min="0.1" max="2" step="0.1" value="0.5">
+          <small><span id="animation-speed-value">0.5</span>s</small>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="blur-effect" checked>
+            Blur behind bubble
+          </label>
+        </div>
+      </section>
+
+      <!-- Sound Settings -->
+      <section class="panel-section">
+        <h2>🔊 Sound Effects</h2>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="sound-enabled" checked>
+            Enable sounds
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="volume">Volume</label>
+          <input type="range" id="volume" min="0" max="100" value="50">
+          <small><span id="volume-value">50</span>%</small>
+        </div>
+        <button class="btn btn-secondary" id="test-sound-btn">Test Sound</button>
+      </section>
+
+      <!-- Custom CSS -->
+      <section class="panel-section full-width">
+        <h2>💅 Custom CSS</h2>
+        <label for="custom-css" style="display: block; margin-bottom: 8px; font-weight: 500;">Custom CSS Code</label>
+        <textarea id="custom-css" placeholder="/* Add your custom CSS here */
+.chat-message {
+  /* Custom styles */
+}"></textarea>
+        <button class="btn btn-primary" id="apply-css-btn">Apply Custom CSS</button>
+      </section>
+
+      <!-- Test Messages -->
+      <section class="panel-section full-width">
+        <h2>🧪 Test Messages</h2>
+        <div class="test-controls">
+          <label for="test-message" style="display: block; margin-bottom: 8px; font-weight: 500;">Test Message Text</label>
+          <input type="text" id="test-message" placeholder="Type a test message..." value="Hello! This is a test message 👋">
+          <button class="btn btn-primary" id="send-test-btn">Send Test Message</button>
+          <button class="btn btn-secondary" id="send-superchat-btn">Send Super Chat</button>
+          <button class="btn btn-secondary" id="send-moderator-btn">Send Mod Message</button>
+        </div>
+      </section>
+    </div>
+
+  <footer>
+    <p>Open <strong>http://localhost:3000</strong> as a Browser Source in OBS</p>
+  </footer>
+  </div>
+
+  <!-- Control panel modules -->
+  <script src="/js/modules/controlWebSocket.js"></script>
+  <script src="/js/modules/platformManager.js"></script>
+  <script src="/js/modules/uiManager.js"></script>
+
+  <!-- Main control panel script -->
+  <script src="/js/control.js?v=20250108c"></script>
+</body>
+</html>
+

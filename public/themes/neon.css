@@ -1,0 +1,83 @@
+/* Neon Theme */
+.chat-message {
+  background: rgba(10, 10, 30, 0.85) !important;
+  border: 1px solid rgba(147, 51, 234, 0.5);
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.3),
+              0 0 40px rgba(147, 51, 234, 0.1);
+}
+
+.chat-message.blur-effect {
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+
+.username {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 8px rgba(147, 51, 234, 0.6));
+}
+
+.message-text {
+  color: #e0e0ff !important;
+  text-shadow: 0 0 10px rgba(147, 51, 234, 0.3);
+}
+
+.user-avatar {
+  border: 2px solid #9333ea !important;
+  box-shadow: 0 0 15px rgba(147, 51, 234, 0.6);
+}
+
+.platform-icon.youtube {
+  background: #ff0000 !important;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+}
+
+.platform-icon.twitch {
+  background: #9146ff !important;
+  box-shadow: 0 0 10px rgba(145, 70, 255, 0.6);
+}
+
+.chat-message.superchat {
+  background: linear-gradient(135deg, #ffd600 0%, #ff6f00 100%) !important;
+  border: 2px solid #ffd600;
+  box-shadow: 0 0 30px rgba(255, 214, 0, 0.6),
+              0 0 60px rgba(255, 214, 0, 0.3);
+  animation: neonPulse 2s infinite;
+}
+
+.chat-message.moderator {
+  background: rgba(0, 180, 100, 0.6) !important;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+  border: none !important;
+}
+
+.moderator-badge {
+  background: #00ff88 !important;
+  color: #000 !important;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+}
+
+@keyframes neonPulse {
+  0%, 100% {
+    box-shadow: 0 0 30px rgba(255, 214, 0, 0.6),
+                0 0 60px rgba(255, 214, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 214, 0, 0.8),
+                0 0 80px rgba(255, 214, 0, 0.4);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
