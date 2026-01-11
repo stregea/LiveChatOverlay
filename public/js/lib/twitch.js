@@ -45,6 +45,17 @@ class TwitchChatClient {
   }
 
   /**
+   * Send IRC command through WebSocket
+   * @param {string} command - IRC command to send
+   */
+  send(command) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(command + '\r\n');
+      console.log('📤 Sent:', command);
+    }
+  }
+
+  /**
    * Handle WebSocket connection open
    * Authenticates and joins channel
    */
@@ -98,6 +109,85 @@ class TwitchChatClient {
   }
 
   /**
+   * Handle PING from Twitch IRC server
+   * Responds with PONG to keep connection alive
+   * @param {string} message - PING message
+   */
+  handlePing(message) {
+    const server = message.split(':')[1]?.trim() || 'tmi.twitch.tv';
+    this.send(`PONG :${server}`);
+  }
+
+  /**
+   * Start ping interval to keep connection alive
+   * Sends PING every 4 minutes
+   */
+  startPingInterval() {
+    this.stopPingInterval(); // Clear any existing interval
+    this.pingInterval = setInterval(() => {
+      if (this.connected && this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.send('PING :tmi.twitch.tv');
+      }
+    }, 240000); // 4 minutes
+  }
+
+  /**
+   * Stop ping interval
+   */
+  stopPingInterval() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
+  }
+
+  /**
+   * Parse PRIVMSG (chat messages)
+   * @param {string} ircMessage - Raw IRC message
+   */
+  parsePrivateMessage(ircMessage) {
+    try {
+      // Parse IRC tags
+      const tagsPart = ircMessage.split(' :')[0];
+      const tags = this.parseTags(tagsPart);
+
+      // Parse username
+      const userMatch = ircMessage.match(/:(\w+)!/);
+      const username = userMatch ? userMatch[1] : 'Unknown';
+
+      // Parse message text
+      const messageMatch = ircMessage.match(/PRIVMSG #\w+ :(.+)/);
+      const text = messageMatch ? messageMatch[1].trim() : '';
+
+      if (!text) return;
+
+      // Create chat message object
+      const chatMessage = {
+        id: tags['id'] || Date.now(),
+        username: tags['display-name'] || username,
+        text: text,
+        avatar: null, // Twitch doesn't provide avatars via IRC, would need API
+        platform: 'twitch',
+        usernameColor: tags['color'] || this.getRandomColor(),
+        isModerator: tags['mod'] === '1' || tags['badges']?.includes('moderator'),
+        isSuperchat: false, // Twitch doesn't have super chats (uses bits instead)
+        amount: null,
+        badges: this.parseBadges(tags['badges']),
+        timestamp: Date.now()
+      };
+
+      // Emit event for parent to handle
+      if (this.onMessage) {
+        this.onMessage(chatMessage);
+      }
+
+      console.log('💬 Twitch message:', chatMessage);
+    } catch (error) {
+      console.error('❌ Error parsing Twitch message:', error);
+    }
+  }
+
+  /**
    * Handle WebSocket errors
    * @param {Error} error - Error object
    */
@@ -130,71 +220,30 @@ class TwitchChatClient {
     }
   }
 
+  /**
+   * Disconnect from Twitch IRC
+   * Closes WebSocket connection and cleans up
+   */
   disconnect() {
+    console.log('👋 Disconnecting from Twitch...');
+
+    this.channelName = null; // Prevent reconnection
+    this.stopPingInterval();
+
     if (this.ws) {
       this.ws.close();
       this.ws = null;
     }
+
     this.connected = false;
-    console.log('Twitch chat disconnected');
+    console.log('✅ Twitch chat disconnected');
   }
 
-  handleIRCMessage(message) {
-    // Handle PING
-    if (message.startsWith('PING')) {
-      this.ws.send('PONG :tmi.twitch.tv');
-      return;
-    }
-
-    // Parse PRIVMSG (chat messages)
-    if (message.includes('PRIVMSG')) {
-      this.parseMessage(message);
-    }
-  }
-
-  parseMessage(ircMessage) {
-    try {
-      // Parse IRC tags
-      const tagsPart = ircMessage.split(' :')[0];
-      const tags = this.parseTags(tagsPart);
-
-      // Parse username
-      const userMatch = ircMessage.match(/:(\w+)!/);
-      const username = userMatch ? userMatch[1] : 'Unknown';
-
-      // Parse message text
-      const messageMatch = ircMessage.match(/PRIVMSG #\w+ :(.+)/);
-      const text = messageMatch ? messageMatch[1].trim() : '';
-
-      if (!text) return;
-
-      // Create chat message object
-      const chatMessage = {
-        id: tags['id'] || Date.now(),
-        username: tags['display-name'] || username,
-        text: text,
-        avatar: null, // Twitch doesn't provide avatars via IRC, would need API
-        platform: 'twitch',
-        usernameColor: tags['color'] || this.getRandomColor(),
-        isModerator: tags['mod'] === '1' || tags['badges']?.includes('moderator'),
-        isSuperchat: false, // Twitch doesn't have super chats (uses bits instead)
-        amount: null,
-        badges: this.parseBadges(tags['badges']),
-        timestamp: Date.now()
-      };
-
-      // Send to overlay via parent WebSocket
-      if (typeof ws !== 'undefined' && ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          type: 'chat-message',
-          data: chatMessage
-        }));
-      }
-    } catch (error) {
-      console.error('Error parsing Twitch message:', error);
-    }
-  }
-
+  /**
+   * Parse IRC tags from message
+   * @param {string} tagString - Tag string from IRC message
+   * @returns {Object} Parsed tags object
+   */
   parseTags(tagString) {
     const tags = {};
     const tagParts = tagString.split(';');
