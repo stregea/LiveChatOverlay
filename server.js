@@ -73,7 +73,7 @@ app.use('/', systemRoutes); // For /health endpoint
 /**
  * 404 handler - catch all unmatched routes
  */
-app.use((req, res, next) => {
+app.use((req, res) => {
   console.warn(`⚠️  404 Not Found: ${req.method} ${req.url}`);
   res.status(404).json({
     status: 'error',
@@ -85,7 +85,7 @@ app.use((req, res, next) => {
 /**
  * General error handler
  */
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error(`❌ Server error: ${err.message}`);
   res.status(500).json({
     status: 'error',
