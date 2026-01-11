@@ -44,13 +44,15 @@
   border: 2px solid #ffd600;
   box-shadow: 0 0 30px rgba(255, 214, 0, 0.6),
               0 0 60px rgba(255, 214, 0, 0.3);
-  animation: neonPulse 2s infinite;
+  /* Slide-up on entrance, then pulse continuously */
+  animation: slideUp 0.5s ease-out, neonPulse 2s infinite 0.5s;
 }
 
 .chat-message.moderator {
   background: rgba(0, 180, 100, 0.6) !important;
   box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
   border: none !important;
+  animation: slideUp 0.5s ease-out;
 }
 
 .moderator-badge {
