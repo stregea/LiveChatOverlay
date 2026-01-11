@@ -202,6 +202,12 @@ function connectTwitch(channelName) {
 
   // Create and connect new client
   twitchClient = new TwitchChatClient(channelName);
+
+  // Set up message callback to route messages to overlay
+  twitchClient.onMessage = (messageData) => {
+    handleChatMessage(messageData);
+  };
+
   twitchClient.connect();
 }
 
