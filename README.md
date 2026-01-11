@@ -1,78 +1,95 @@
 # 🎥 Live Chat Overlay
 
-A powerful, modular live chat overlay for OBS Studio with multistream support for YouTube and Twitch.
+A professional live chat overlay for OBS Studio supporting **YouTube** and **Twitch** with real-time multistream capability.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/Node.js-14%2B-green.svg)](https://nodejs.org/)
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![Node.js](https://img.shields.io/badge/Node.js-14%2B-green.svg)
 
 ---
 
-## ⭐ Key Features
+## ✨ Features
 
-- ✅ **Auto-Detect Live Streams** - Automatically find your YouTube live stream with 1 click
-- ✅ **Multistream Support** - Connect to YouTube AND Twitch simultaneously
-- ✅ **Smart Caching** - Preserves YouTube API quota with intelligent caching
-- ✅ **Real-time Updates** - WebSocket-based instant message delivery
-- ✅ **Customizable Themes** - Neon, Cozy, and Custom CSS support
-- ✅ **Rich Features** - Avatars, badges, moderator highlights, super chats
-- ✅ **Sound Effects** - Customizable audio notifications
-- ✅ **Smooth Animations** - Slide-up with fade effects
-- ✅ **Emoji Support** - Twemoji rendering for all emojis
+- 🎯 **Multistream** - Display YouTube and Twitch chats simultaneously
+- 🔍 **Auto-Detect** - Find your YouTube live stream automatically
+- 🎨 **Customizable** - Neon, Cozy, and Custom CSS themes
+- 🖼️ **Rich Display** - Avatars, badges, moderator highlights, super chats
+- 🔊 **Sound Effects** - Notification sounds for new messages
+- ⚡ **Real-time** - WebSocket-based instant message delivery
+- 💾 **Smart Caching** - Preserves YouTube API quota
+- 😊 **Emoji Support** - Twemoji rendering
 
-## 🚀 Quick Start
+---
+
+## 📋 Prerequisites
+
+Before you begin, ensure you have:
+
+- **Node.js 14+** - [Download here](https://nodejs.org/)
+- **YouTube API Key** - For YouTube chat (see setup below)
+- **OBS Studio** - [Download here](https://obsproject.com/)
+
+---
+
+## 🚀 Installation & Setup
+
+### Step 1: Clone & Install
 
 ```bash
-# 1. Install dependencies
+# Clone or download this repository
+cd LiveChatOverlay
+
+# Install dependencies
 npm install
-
-# 2. Configure (copy example and edit)
-cp config.example.js config.js
-# Edit config.js with your API keys and channel ID
-
-# 3. Start server
-npm start
-
-# 4. Add to OBS Studio
-# Browser Source URL: http://localhost:3000
-# Recommended size: Width 400-600, Height 800-1080
 ```
 
-**URLs:**
-- 📺 Overlay: `http://localhost:3000`
-- ⚙️ Control Panel: `http://localhost:3000/control`
+### Step 2: Get YouTube API Key
 
-## 📡 Multistream Mode
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project (or select existing)
+3. Enable **"YouTube Data API v3"**:
+   - Click "Enable APIs and Services"
+   - Search for "YouTube Data API v3"
+   - Click "Enable"
+4. Create credentials:
+   - Click "Create Credentials" → "API Key"
+   - Copy the API key
+5. (Optional) Restrict the key to "YouTube Data API v3" for security
 
-Connect to **both YouTube and Twitch** simultaneously and see all messages in one overlay!
+### Step 3: Get YouTube Channel ID
 
-1. Open control panel: `http://localhost:3000/control`
-2. **YouTube**: Click "Auto-detect" or enter Video ID → "Connect YouTube"
-3. **Twitch**: Enter channel name → "Connect Twitch"
-4. Both chats now appear in the same overlay with platform icons!
+1. Go to your [YouTube Studio](https://studio.youtube.com/)
+2. Click your profile icon → "Your Channel"
+3. Copy the channel ID from the URL:
+   - URL format: `youtube.com/channel/YOUR_CHANNEL_ID`
+   - Example: `UC5PzeoJUzl3iWw6CElbWWkg`
 
-**Read more:** [Multistream Documentation](docs/MULTISTREAM.md)
+### Step 4: (Optional) Get Twitch Credentials
 
-## 📖 Documentation
+Only needed if you want user avatars (optional):
 
-### Getting Started
-- **[Quick Start Guide](docs/QUICKSTART.md)** - Get up and running in 5 minutes
-- **[Full Setup Guide](docs/SETUP.md)** - Detailed installation and configuration
-- **[OBS Integration](docs/OBS_SETUP.md)** - How to add overlay to OBS Studio
+1. Go to [Twitch Developer Console](https://dev.twitch.tv/console)
+2. Enable Two-Factor Authentication on your Twitch account
+3. Click "Register Your Application"
+4. Fill in:
+   - **Name**: Your app name (e.g., "Live Chat Overlay")
+   - **OAuth Redirect URLs**: `http://localhost:3000`
+   - **Category**: "Chat Bot" or "Application Integration"
+5. Click "Create"
+6. Click "Manage" on your application
+7. Copy **Client ID**
+8. Click "New Secret" and copy **Client Secret**
 
-### Features
-- **[Auto-Detect](docs/AUTO_DETECT.md)** - Automatically find your live stream
-- **[Multistream Guide](docs/MULTISTREAM.md)** - Use YouTube + Twitch together
-- **[Caching System](docs/CACHING_SYSTEM.md)** - How quota preservation works
+### Step 5: Configure
 
-### Technical
-- **[Architecture](docs/ARCHITECTURE.md)** - System design and code structure
-- **[Refactoring Summary](docs/REFACTORING_SUMMARY.md)** - Code improvements
+```bash
+# Copy example config
+cp config.example.js config.js
 
-## ⚙️ Configuration
+# Edit config.js with your credentials
+nano config.js  # or use any text editor
+```
 
-### Basic Setup
-
-Edit `config.js`:
+**Required Configuration:**
 
 ```javascript
 module.exports = {
@@ -80,184 +97,312 @@ module.exports = {
     port: 3000
   },
   
+  // REQUIRED for YouTube
   youtube: {
-    apiKey: 'YOUR_YOUTUBE_API_KEY',        // Required for live detection
-    channelId: 'YOUR_CHANNEL_ID',          // Your YouTube channel ID
-    simulationMode: false                   // Set true for testing without API
+    apiKey: 'YOUR_YOUTUBE_API_KEY',           // From Step 2
+    channelId: 'YOUR_YOUTUBE_CHANNEL_ID',     // From Step 3
+    simulationMode: false
   },
 
+  // OPTIONAL for Twitch (works without credentials)
   twitch: {
-    defaultChannel: 'your_channel_name',
-    botUsername: 'justinfan12345'           // Anonymous read-only access
+    defaultChannel: '',                        // Your Twitch channel name
+    botUsername: 'justinfan12345',            // Anonymous (leave as-is)
+    clientId: '',                              // From Step 4 (optional)
+    clientSecret: ''                           // From Step 4 (optional)
   },
 
+  // Overlay settings
   overlay: {
-    maxMessages: 6,                         // Messages shown on screen
+    maxMessages: 6,
     soundEnabled: true,
     soundVolume: 0.5,
-    // ... more settings
+    // ...see config.example.js for all options
   }
 };
 ```
 
-### Getting API Keys
-
-**YouTube API Key:**
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project
-3. Enable "YouTube Data API v3"
-4. Create credentials → API Key
-5. Copy key to `config.js`
-
-**Twitch (Optional):**
-- The default anonymous mode works for most use cases
-- For advanced features, see [Twitch API Documentation](https://dev.twitch.tv/)
-
-## 🎨 Customization
-
-### Themes
-- **Neon** - Dark background with glowing effects
-- **Cozy** - Warm, comfortable colors
-- **Custom** - Create your own with custom CSS
-
-### Custom CSS
-Use the control panel to add custom styles:
-
-```css
-.chat-message {
-  background: rgba(255, 0, 0, 0.8) !important;
-  border-radius: 30px !important;
-}
-
-.username {
-  color: #ffff00 !important;
-  font-weight: bold !important;
-}
-```
-
-Changes apply instantly without reloading!
-
-## 📁 Project Structure
-
-```
-LiveChatOverlay/
-├── server.js              # Main server entry point
-├── config.js              # Configuration file
-├── package.json           # Dependencies
-│
-├── src/                   # Server-side modules (NEW!)
-│   ├── cache/
-│   │   └── LiveStreamCache.js       # YouTube API quota preservation
-│   ├── websocket/
-│   │   ├── clientManager.js         # Client connection management
-│   │   ├── configManager.js         # Configuration state
-│   │   └── messageHandlers.js       # Message routing
-│   └── routes/
-│       ├── youtube.js               # YouTube API endpoints
-│       ├── twitch.js                # Twitch API endpoints
-│       └── system.js                # Health & system endpoints
-│
-├── public/                # Client-side files
-│   ├── index.html        # Overlay page
-│   ├── control.html      # Control panel
-│   ├── css/
-│   │   ├── overlay.css   # Base overlay styles
-│   │   └── control.css   # Control panel styles
-│   ├── js/
-│   │   ├── overlay.js    # Main overlay script
-│   │   ├── control.js    # Control panel script
-│   │   ├── youtube.js    # YouTube client
-│   │   ├── twitch.js     # Twitch client
-│   │   └── modules/      # Modular components (NEW!)
-│   │       ├── overlayWebSocket.js   # WebSocket management
-│   │       ├── configManager.js      # Config state
-│   │       ├── messageRenderer.js    # Message DOM creation
-│   │       └── messageQueue.js       # Display queue
-│   └── themes/
-│       ├── neon.css      # Neon theme
-│       ├── cozy.css      # Cozy theme
-│       └── custom.css    # Custom theme template
-│
-└── docs/                  # Documentation
-    ├── ARCHITECTURE.md    # Technical architecture
-    ├── QUICKSTART.md      # Quick start guide
-    ├── SETUP.md          # Detailed setup
-    ├── OBS_SETUP.md      # OBS integration
-    ├── MULTISTREAM.md    # Multistream guide
-    ├── AUTO_DETECT.md    # Auto-detect feature
-    └── CACHING_SYSTEM.md # Caching details
-```
-
-## 🛠️ Development
-
-### Code Architecture
-
-The project uses a **modular architecture** for better maintainability:
-
-- **Server-side**: Separated into cache, WebSocket, and route modules
-- **Client-side**: Overlay split into functional modules (WebSocket, config, rendering, queue)
-- **Documentation**: Comprehensive JSDoc comments throughout
-
-See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed technical documentation.
-
-### Running in Development
+### Step 6: Start the Server
 
 ```bash
 npm start
 ```
 
-Access:
-- Overlay: http://localhost:3000
-- Control Panel: http://localhost:3000/control
-- Health Check: http://localhost:3000/health
+You should see:
+```
+🚀 Server running on http://localhost:3000
+✅ YouTube API configured
+✅ Overlay available at: http://localhost:3000
+✅ Control panel at: http://localhost:3000/control
+```
 
-## 🐛 Troubleshooting
+### Step 7: Add to OBS Studio
 
-### YouTube API Quota Error
-- **Problem**: "You have exceeded your quota"
-- **Solution**: The system uses caching to preserve quota. Wait 5 minutes or clear cache.
-- See: [YOUTUBE_QUOTA_ERROR.md](docs/YOUTUBE_QUOTA_ERROR.md)
+1. Open OBS Studio
+2. Add a new **Browser Source**:
+   - Click **+** in Sources → **Browser**
+3. Configure:
+   - **URL**: `http://localhost:3000`
+   - **Width**: `400` (recommended for side panel)
+   - **Height**: `1080` (or your canvas height)
+   - **FPS**: `30`
+   - ✅ Check "Shutdown source when not visible"
+4. Position the overlay on your scene
+5. Click **OK**
 
-### Messages Not Appearing
-1. Check browser console for errors (F12)
-2. Verify WebSocket connection (should see "Connected to server")
-3. Check control panel shows correct platform status
-4. Test with "Send Test Message" button
-
-### Auto-Detect Not Working
-1. Verify YouTube API key in `config.js`
-2. Verify channel ID is correct
-3. Make sure you have an active live stream
-4. Check server logs for API errors
-
-## 📊 API Endpoints
-
-- `GET /health` - Server health check
-- `GET /api/youtube/channel/:channelId/live` - Detect live stream
-- `GET /api/cache/stats` - Cache statistics
-- `POST /api/cache/clear` - Clear cache
-
-## 🤝 Contributing
-
-Contributions are welcome! The codebase is now modular and well-documented:
-
-1. Fork the repository
-2. Create a feature branch
-3. Follow existing code style (JSDoc comments)
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-MIT License - feel free to use this project for personal or commercial streaming!
-
-## 🙏 Acknowledgments
-
-- **Twemoji** by Twitter for emoji rendering
-- **Node.js** community
-- **OBS Studio** for the amazing streaming software
+**Recommended Sizes:**
+- **Side Panel**: 400x1080 (most common)
+- **Bottom Ticker**: 1920x200
+- **Floating Box**: 600x400
 
 ---
 
-**Need Help?** Check the [documentation](docs/) or create an issue on GitHub!
+## 🎮 Usage
+
+### Control Panel
+
+Open `http://localhost:3000/control` to manage your overlay.
+
+#### Connect to YouTube
+
+1. Click **"🔍 Auto-detect"** button (finds your current live stream)
+   - OR manually enter your Video ID
+2. Click **"Connect YouTube"**
+3. Messages will appear in the overlay
+
+#### Connect to Twitch
+
+1. Enter your Twitch channel name (lowercase)
+2. Click **"Connect Twitch"**
+3. Messages will appear in the overlay
+
+#### Multistream Mode
+
+Connect to **both** YouTube and Twitch simultaneously:
+- Both chat platforms display in the same overlay
+- Platform icons (▶ YouTube, ▼ Twitch) distinguish messages
+- Independent connect/disconnect for each platform
+
+### Customization
+
+**Themes:**
+- **Neon** - Dark with glowing effects
+- **Cozy** - Warm, comfortable colors
+- **Custom** - Write your own CSS
+
+**Custom CSS Example:**
+```css
+.chat-message {
+  background: rgba(0, 0, 0, 0.8) !important;
+  border-radius: 20px !important;
+}
+
+.username {
+  color: #00ffff !important;
+}
+```
+
+---
+
+## 📁 Project Structure
+
+```
+LiveChatOverlay/
+├── server.js                 # Main server
+├── config.js                 # Your configuration
+├── config.example.js         # Configuration template
+├── package.json
+│
+├── src/                      # Server-side code
+│   ├── cache/               # YouTube API quota caching
+│   ├── routes/              # API endpoints
+│   └── websocket/           # WebSocket handling
+│
+├── public/                   # Client-side code
+│   ├── index.html           # Overlay page
+│   ├── control.html         # Control panel
+│   ├── css/                 # Stylesheets
+│   ├── js/
+│   │   ├── overlay.js       # Main overlay logic
+│   │   ├── control.js       # Control panel logic
+│   │   ├── lib/
+│   │   │   ├── youtube.js   # YouTube API client
+│   │   │   └── twitch.js    # Twitch IRC client
+│   │   └── modules/         # Reusable components
+│   ├── themes/              # Theme CSS files
+│   └── sounds/              # Notification sounds
+│
+└── docs/                     # Documentation
+
+└── docs/                     # Documentation
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### "YouTube API quota exceeded"
+
+**Problem:** You've hit the daily YouTube API quota limit.
+
+**Solutions:**
+1. Wait 5 minutes - the system caches results
+2. Clear cache: `POST http://localhost:3000/api/cache/clear`
+3. Manually enter Video ID instead of using auto-detect
+
+**Prevention:** The overlay automatically caches live stream lookups for 5 minutes to preserve quota.
+
+### Messages not appearing in overlay
+
+1. **Check browser console** (F12) for errors
+2. **Verify connection** - Control panel should show "Connected" status
+3. **Test with demo** - Click "Send Test Message" in control panel
+4. **Clear browser cache** - Hard refresh: `Cmd+Shift+R` (Mac) or `Ctrl+Shift+R` (Windows)
+5. **Check WebSocket** - Console should show "✅ Connected to server"
+
+### Auto-Detect not finding live stream
+
+1. **Verify you're live** - Check YouTube Studio
+2. **Check API key** - Must be valid and have YouTube Data API v3 enabled
+3. **Check channel ID** - Must match your YouTube channel exactly
+4. **Check logs** - Server console shows API errors
+5. **Try manual entry** - Get Video ID from your live stream URL
+
+### Twitch messages not appearing
+
+1. **Check channel name** - Must be lowercase, no special characters
+2. **Hard refresh browser** - `Cmd+Shift+R` (Mac) or `Ctrl+Shift+R` (Windows)
+3. **Check console** - Should see "✅ Connected to Twitch IRC"
+4. **Test in Twitch chat** - Send a message while overlay is open
+
+### OBS Browser Source is blank
+
+1. **Check URL** - Must be `http://localhost:3000` (not control.html)
+2. **Restart server** - Stop and run `npm start` again
+3. **Refresh source** - Right-click source → Refresh
+4. **Check port** - Ensure port 3000 isn't used by another app
+
+---
+
+## 🎨 Advanced Customization
+
+### Custom Animations
+
+Edit `/public/css/overlay.css`:
+
+```css
+.chat-message {
+  animation: slideUpFade 0.5s ease-out;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+```
+
+### Custom Sound Effects
+
+Replace `/public/sounds/message.mp3` with your own sound file (must be named `message.mp3`).
+
+### Message Duration
+
+Edit `config.js`:
+
+```javascript
+overlay: {
+  messageDuration: 10000,  // 10 seconds (0 = unlimited)
+  maxMessages: 6,           // Max messages on screen
+}
+```
+
+---
+
+## 📊 API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Server health check |
+| `/api/youtube/channel/:channelId/live` | GET | Detect live stream |
+| `/api/cache/stats` | GET | Cache statistics |
+| `/api/cache/clear` | POST | Clear cache |
+
+---
+
+## 🔐 Security Notes
+
+- **Never commit `config.js`** to version control (already in `.gitignore`)
+- **Restrict API keys** in Google Cloud Console to specific APIs
+- **Use environment variables** for production deployments
+- **Keep dependencies updated** with `npm audit fix`
+
+---
+
+## 🚀 Deployment (Optional)
+
+To run on a VPS or cloud server:
+
+```bash
+# Install PM2 for process management
+npm install -g pm2
+
+# Start with PM2
+pm2 start server.js --name "chat-overlay"
+
+# Save PM2 process list
+pm2 save
+
+# Setup PM2 to start on boot
+pm2 startup
+```
+
+**Update OBS Browser Source URL** to your server's IP:
+```
+http://YOUR_SERVER_IP:3000
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! The codebase uses modular architecture with comprehensive JSDoc comments.
+
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature-name`
+3. Follow existing code style
+4. Test thoroughly
+5. Submit pull request
+
+---
+
+## 📄 License
+
+MIT License - Free for personal and commercial use!
+
+---
+
+## 🙏 Credits
+
+- **Twemoji** by Twitter - Emoji rendering
+- **Node.js** - Runtime environment
+- **OBS Studio** - Streaming software
+
+---
+
+## 📚 Additional Documentation
+
+- [Architecture Overview](docs/ARCHITECTURE.md) - System design and code structure
+- [OBS Setup Guide](docs/OBS_SETUP.md) - How to add overlay to OBS Studio
+
+---
+
+**Need Help?** Open an issue or check the [documentation](docs/)!
+
+**Made with ❤️ for streamers**
 
