@@ -32,7 +32,9 @@ const config = {
 
   // Twitch configuration
   twitch: {
-    // Default channel to connect to
+    // Your Twitch channel name
+    // This will be displayed in the control panel (read-only)
+    // Example: 'yourchannelname'
     defaultChannel: 'YOUR_TWITCH_CHANNEL_HERE',
 
     // Anonymous mode (no credentials needed, but no avatars)

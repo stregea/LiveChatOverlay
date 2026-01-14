@@ -395,10 +395,26 @@ MIT License - Free for personal and commercial use!
 
 ---
 
-## 📚 Additional Documentation
+## 📚 Documentation
 
-- [Architecture Overview](docs/ARCHITECTURE.md) - System design and code structure
-- [OBS Setup Guide](docs/OBS_SETUP.md) - How to add overlay to OBS Studio
+Comprehensive documentation is available in the `docs/` folder:
+
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - System design, module structure, and data flow
+- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Quick reference for common development tasks
+- **[OBS Setup Guide](docs/OBS_SETUP.md)** - Step-by-step OBS integration
+
+### Quick Links
+
+**For Users:**
+- [Installation](#-installation--setup) - Get started quickly
+- [OBS Setup](#step-7-add-to-obs-studio) - Add overlay to OBS
+- [Configuration](#step-5-configure-application) - Customize settings
+
+**For Developers:**
+- [Architecture Overview](docs/ARCHITECTURE.md) - Understand the codebase
+- [Common Tasks](docs/DEVELOPER_GUIDE.md#-common-tasks) - Quick recipes
+- [Module Reference](docs/DEVELOPER_GUIDE.md#-file-location-reference) - Find what you need
+- [Code Style](docs/DEVELOPER_GUIDE.md#-code-style) - Follow conventions
 
 ---
 

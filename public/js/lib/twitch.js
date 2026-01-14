@@ -3,27 +3,52 @@
  *
  * Handles connection to Twitch IRC chat and message processing.
  * Uses WebSocket IRC connection for real-time chat messages.
+ *
+ * Features:
+ * - Real-time IRC WebSocket connection to Twitch chat
+ * - Anonymous read-only access (no authentication needed)
+ * - Automatic reconnection with exponential backoff
+ * - IRC tag parsing for user badges, colors, emotes
+ * - PING/PONG keepalive mechanism
+ *
+ * IRC Protocol Flow:
+ * 1. connect() → WebSocket to wss://irc-ws.chat.twitch.tv:443
+ * 2. CAP REQ → Request capabilities (tags, commands)
+ * 3. NICK/PASS → Authenticate (anonymous: justinfan12345)
+ * 4. JOIN #channel → Join the channel
+ * 5. Receive PRIVMSG → Parse and process chat messages
+ * 6. Send PONG → Respond to PING keepalive
+ *
+ * Message Format:
+ * @badge-info=;badges=moderator/1;color=#FF0000;display-name=Username;... :username!username@username.tmi.twitch.tv PRIVMSG #channel :message text
+ *
+ * Twitch IRC Documentation:
+ * https://dev.twitch.tv/docs/irc
  */
 
 class TwitchChatClient {
   /**
    * Create a Twitch chat client
-   * @param {string} channelName - Twitch channel name (lowercase)
+   *
+   * @param {string} channelName - Twitch channel name (lowercase, without #)
    */
   constructor(channelName) {
-    this.channelName = channelName.toLowerCase();
-    this.ws = null;
-    this.connected = false;
-    this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 10;
-    this.reconnectDelay = 5000;
-    this.pingInterval = null;
+    // Connection configuration
+    this.channelName = channelName.toLowerCase();  // Twitch channels are lowercase
+    this.ws = null;                                // WebSocket connection
 
-    // Configuration (can be overridden)
+    // State management
+    this.connected = false;                        // Connection status
+    this.reconnectAttempts = 0;                    // Current reconnection attempt
+    this.maxReconnectAttempts = 10;                // Max reconnect attempts
+    this.reconnectDelay = 5000;                    // Delay between reconnects (ms)
+    this.pingInterval = null;                      // Keepalive interval handle
+
+    // IRC connection settings
     this.config = {
-      ircUrl: 'wss://irc-ws.chat.twitch.tv:443',
-      botUsername: 'justinfan12345', // Anonymous read-only
-      oauthToken: 'oauth:fake'
+      ircUrl: 'wss://irc-ws.chat.twitch.tv:443',   // Twitch IRC WebSocket URL
+      botUsername: 'justinfan12345',               // Anonymous read-only username
+      oauthToken: 'oauth:fake'                     // Anonymous doesn't need real token
     };
   }
 
@@ -142,41 +167,59 @@ class TwitchChatClient {
   }
 
   /**
-   * Parse PRIVMSG (chat messages)
+   * Parse PRIVMSG (chat messages) from Twitch IRC
+   *
+   * IRC Message Format:
+   * @badge-info=;badges=moderator/1;color=#FF0000;display-name=Username;emotes=;id=abc-123;mod=1;... :username!username@username.tmi.twitch.tv PRIVMSG #channel :message text
+   *
+   * Parsed Components:
+   * - Tags: Key-value pairs with user metadata (@tags)
+   * - Username: Extracted from :username! prefix
+   * - Message: Text after PRIVMSG #channel :
+   *
+   * Important Tags:
+   * - display-name: User's display name (with capitalization)
+   * - color: User's chosen username color
+   * - badges: Comma-separated badges (moderator/1,subscriber/12)
+   * - mod: 1 if moderator, 0 otherwise
+   * - id: Unique message ID
+   * - emotes: Emote positions (e.g., "25:0-4,6-10")
+   *
    * @param {string} ircMessage - Raw IRC message
    */
   parsePrivateMessage(ircMessage) {
     try {
-      // Parse IRC tags
+      // Parse IRC tags (everything before first ' :')
       const tagsPart = ircMessage.split(' :')[0];
       const tags = this.parseTags(tagsPart);
 
-      // Parse username
+      // Parse username from :username!username@username.tmi.twitch.tv
       const userMatch = ircMessage.match(/:(\w+)!/);
       const username = userMatch ? userMatch[1] : 'Unknown';
 
-      // Parse message text
+      // Parse message text from PRIVMSG #channel :text
       const messageMatch = ircMessage.match(/PRIVMSG #\w+ :(.+)/);
       const text = messageMatch ? messageMatch[1].trim() : '';
 
+      // Ignore empty messages
       if (!text) return;
 
-      // Create chat message object
+      // Convert to overlay message format
       const chatMessage = {
-        id: tags['id'] || Date.now(),
-        username: tags['display-name'] || username,
-        text: text,
-        avatar: null, // Twitch doesn't provide avatars via IRC, would need API
+        id: tags['id'] || Date.now(),                                      // Unique message ID
+        username: tags['display-name'] || username,                        // Display name with caps
+        text: text,                                                        // Message content
+        avatar: null,                                                      // IRC doesn't provide avatars (would need Helix API)
         platform: 'twitch',
-        usernameColor: tags['color'] || this.getRandomColor(),
-        isModerator: tags['mod'] === '1' || tags['badges']?.includes('moderator'),
-        isSuperchat: false, // Twitch doesn't have super chats (uses bits instead)
+        usernameColor: tags['color'] || this.getRandomColor(),            // User's chosen color or random
+        isModerator: tags['mod'] === '1' || tags['badges']?.includes('moderator'), // Check mod tag or badge
+        isSuperchat: false,                                                // Twitch uses bits/subscriptions, not superchats
         amount: null,
-        badges: this.parseBadges(tags['badges']),
+        badges: this.parseBadges(tags['badges']),                          // Parse badge list
         timestamp: Date.now()
       };
 
-      // Emit event for parent to handle
+      // Emit to parent overlay via callback
       if (this.onMessage) {
         this.onMessage(chatMessage);
       }

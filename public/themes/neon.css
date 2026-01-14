@@ -31,12 +31,24 @@
 
 .platform-icon.youtube {
   background: #ff0000 !important;
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+  border-color: rgba(255, 0, 0, 0.3) !important;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.6),
+              0 0 20px rgba(255, 0, 0, 0.4);
+}
+
+.platform-icon.youtube i {
+  line-height: 1 !important;
 }
 
 .platform-icon.twitch {
   background: #9146ff !important;
-  box-shadow: 0 0 10px rgba(145, 70, 255, 0.6);
+  border-color: rgba(145, 70, 255, 0.3) !important;
+  box-shadow: 0 0 10px rgba(145, 70, 255, 0.6),
+              0 0 20px rgba(145, 70, 255, 0.4);
+}
+
+.platform-icon.twitch i {
+  line-height: 1 !important;
 }
 
 .chat-message.superchat {

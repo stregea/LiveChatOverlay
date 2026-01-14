@@ -26,10 +26,20 @@
 
 .platform-icon.youtube {
   background: #ff5555 !important;
+  border-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.platform-icon.youtube i {
+  line-height: 1 !important;
 }
 
 .platform-icon.twitch {
   background: #9146ff !important;
+  border-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.platform-icon.twitch i {
+  line-height: 1 !important;
 }
 
 .chat-message.superchat {

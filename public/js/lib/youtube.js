@@ -3,24 +3,49 @@
  *
  * Handles connection to YouTube live chat and message processing.
  * Supports both real YouTube API and simulation mode for testing.
+ *
+ * Features:
+ * - Real-time chat message polling from YouTube Live Chat API
+ * - Automatic rate limit detection and exponential backoff
+ * - Simulation mode for testing without API key
+ * - Quota-aware error handling
+ *
+ * Flow:
+ * 1. connect() → Checks for API key
+ * 2. If API key exists → connectToRealChat() → fetchLiveChatId() → startPolling()
+ * 3. If no API key → startSimulation() (generates fake messages)
+ * 4. Messages processed via processMessage() → sendToOverlay()
+ *
+ * Rate Limiting:
+ * - Handles HTTP 429 with exponential backoff (10s, 20s, 40s, 80s, 160s)
+ * - Falls back to simulation mode after max retries
+ * - Respects YouTube's suggested polling intervals (pollingIntervalMillis)
  */
 
 class YouTubeChatClient {
   /**
    * Create a YouTube chat client
-   * @param {string} videoId - YouTube video ID
+   *
+   * @param {string} videoId - YouTube video ID (11 characters, e.g., 'dQw4w9WgXcQ')
    */
   constructor(videoId) {
-    this.videoId = videoId;
-    this.pollingInterval = null;
-    this.nextPageToken = null;
-    this.apiKey = null; // User needs to provide their own API key
-    this.liveChatId = null;
-    this.isConnected = false;
-    this.simulationMode = true; // Enable by default
-    this.pollingDelay = 5000; // Start with 5 seconds
-    this.rateLimitRetryCount = 0;
-    this.maxRetries = 5;
+    // Connection configuration
+    this.videoId = videoId;                    // YouTube video ID to monitor
+    this.apiKey = null;                        // YouTube Data API v3 key (set via setApiKey())
+    this.liveChatId = null;                    // Live chat ID from YouTube API
+
+    // State management
+    this.isConnected = false;                  // Connection status flag
+    this.simulationMode = true;                // Default to simulation (no API key)
+
+    // Polling configuration
+    this.pollingInterval = null;               // setTimeout/setInterval handle
+    this.pollingDelay = 5000;                  // Polling delay in ms (updated by API)
+    this.nextPageToken = null;                 // Pagination token for next message batch
+
+    // Rate limit handling
+    this.rateLimitRetryCount = 0;              // Current retry attempt count
+    this.maxRetries = 5;                       // Max retries before fallback to simulation
   }
 
   /**
@@ -295,11 +320,34 @@ class YouTubeChatClient {
 
   /**
    * Process a YouTube chat message
-   * Converts YouTube message format to overlay format
+   * Converts YouTube API message format to standardized overlay format
+   *
+   * YouTube API Message Structure:
+   * - id: Unique message ID
+   * - snippet.displayMessage: Text content (may include emojis as :emoji_name:)
+   * - snippet.superChatDetails: Present if this is a superchat/donation
+   * - authorDetails.displayName: Username
+   * - authorDetails.profileImageUrl: Avatar URL
+   * - authorDetails.isChatModerator: Moderator status
+   * - authorDetails.isChatSponsor: Channel member/sponsor status
+   *
+   * Overlay Message Format:
+   * - id: Unique identifier for deduplication
+   * - username: Display name
+   * - text: Message content
+   * - avatar: Profile image URL
+   * - platform: 'youtube'
+   * - usernameColor: Random color for display
+   * - isModerator: Boolean flag
+   * - isSuperchat: Boolean flag for donations
+   * - amount: Donation amount string (e.g., "$5.00")
+   * - badges: Array of badge identifiers
+   * - timestamp: Current timestamp for sorting
+   *
    * @param {Object} message - YouTube API message object
    */
   processMessage(message) {
-    // Log avatar URL for debugging
+    // Debug: Log avatar URL to help troubleshoot missing avatars
     if (message.authorDetails && message.authorDetails.profileImageUrl) {
       console.log(`✅ Avatar URL for ${message.authorDetails.displayName}:`, message.authorDetails.profileImageUrl);
     } else {
@@ -307,6 +355,7 @@ class YouTubeChatClient {
       console.log('Author details:', message.authorDetails);
     }
 
+    // Convert to overlay message format
     const chatMessage = {
       id: message.id,
       username: message.authorDetails.displayName,

@@ -46,6 +46,7 @@ let currentConfig = {
   youtubeApiKey: config.youtube.apiKey || '',
   youtubeChannelId: config.youtube.channelId || '',
   youtubeSimulationMode: config.youtube.simulationMode,
+  twitchDefaultChannel: config.twitch.defaultChannel || '',
   twitchConfig: {
     botUsername: config.twitch.botUsername
   }
