@@ -222,3 +222,15 @@ body {
   display: none;
 }
 
+/* Twitch Emote Styling */
+.twitch-emote {
+  height: 28px;
+  width: auto;
+  vertical-align: middle;
+  margin: 0 2px;
+  display: inline-block;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+

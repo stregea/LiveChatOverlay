@@ -44,6 +44,9 @@ class TwitchChatClient {
     this.reconnectDelay = 5000;                    // Delay between reconnects (ms)
     this.pingInterval = null;                      // Keepalive interval handle
 
+    // Emote support
+    this.globalEmotes = new Map();                 // Global Twitch emotes (code -> URL)
+
     // IRC connection settings
     this.config = {
       ircUrl: 'wss://irc-ws.chat.twitch.tv:443',   // Twitch IRC WebSocket URL
@@ -102,6 +105,9 @@ class TwitchChatClient {
 
     // Start ping interval to keep connection alive
     this.startPingInterval();
+
+    // Fetch Twitch global emotes
+    this.fetchGlobalEmotes();
   }
 
   /**
@@ -204,11 +210,14 @@ class TwitchChatClient {
       // Ignore empty messages
       if (!text) return;
 
+      // Process emotes in message text (replace emote codes with img tags)
+      const processedText = this.parseEmotesInMessage(text);
+
       // Convert to overlay message format
       const chatMessage = {
         id: tags['id'] || Date.now(),                                      // Unique message ID
         username: tags['display-name'] || username,                        // Display name with caps
-        text: text,                                                        // Message content
+        text: processedText,                                               // Message content with emotes
         avatar: null,                                                      // IRC doesn't provide avatars (would need Helix API)
         platform: 'twitch',
         usernameColor: tags['color'] || this.getRandomColor(),            // User's chosen color or random
@@ -328,11 +337,115 @@ class TwitchChatClient {
     ];
     return colors[Math.floor(Math.random() * colors.length)];
   }
+
+  /**
+   * Fetch Twitch global emotes
+   * Uses backend API to avoid CORS issues
+   * Stores emotes in Map for quick lookup during message parsing
+   */
+  async fetchGlobalEmotes() {
+    try {
+      console.log('🎭 Fetching Twitch global emotes...');
+
+      // Fetch from our backend API (no CORS issues)
+      const response = await fetch('/api/twitch/emotes/global');
+
+      if (!response.ok) {
+        console.warn('⚠️ Failed to fetch emotes from backend, using fallback list');
+        this.loadFallbackEmotes();
+        return;
+      }
+
+      const data = await response.json();
+
+      // Store only Twitch emotes (ID format)
+      if (data.twitch && data.twitch.length > 0) {
+        data.twitch.forEach(emote => {
+          if (emote.name && emote.id) {
+            this.globalEmotes.set(emote.name, emote.id);
+          }
+        });
+        console.log(`✅ Loaded ${data.twitch.length} Twitch global emotes`);
+      } else {
+        // Load fallback Twitch emotes if backend didn't return any
+        console.warn('⚠️ No Twitch emotes from backend, using fallback list');
+        this.loadFallbackEmotes();
+      }
+
+
+      console.log(`✅ Total emotes loaded: ${this.globalEmotes.size}`);
+    } catch (error) {
+      console.warn('⚠️ Could not fetch emotes:', error.message);
+      this.loadFallbackEmotes();
+    }
+  }
+
+  /**
+   * Load common Twitch emotes as fallback
+   * Used when API fetch fails
+   */
+  loadFallbackEmotes() {
+    // Popular global Twitch emotes with their IDs
+    const fallbackEmotes = {
+      'Kappa': '25',
+      'PogChamp': '88',
+      'LUL': '425618',
+      'CoolStoryBob': '123171',
+      'BibleThump': '86',
+      '4Head': '354',
+      'SMOrc': '52',
+      'PJSalt': '36',
+      'FailFish': '360',
+      'Kreygasm': '41',
+      'DansGame': '33',
+      'NotLikeThis': '58765',
+      'BabyRage': '22639',
+      'WutFace': '28087',
+      'ResidentSleeper': '245',
+      'TriHard': '120232'
+    };
+
+    Object.entries(fallbackEmotes).forEach(([code, id]) => {
+      this.globalEmotes.set(code, id);
+    });
+
+    console.log(`✅ Loaded ${this.globalEmotes.size} fallback Twitch emotes`);
+  }
+
+
+  /**
+   * Parse and replace emotes in message text
+   * Detects Twitch global emote codes and returns text with HTML img tags
+   *
+   * @param {string} text - Original message text
+   * @returns {string} HTML string with emote images
+   */
+  parseEmotesInMessage(text) {
+    if (!text || this.globalEmotes.size === 0) {
+      return text;
+    }
+
+    // Split message into words
+    const words = text.split(' ');
+
+    // Replace emote codes with img tags
+    const processedWords = words.map(word => {
+      // Remove punctuation for emote matching
+      const cleanWord = word.replace(/[.,!?;:]$/, '');
+      const punctuation = word.slice(cleanWord.length);
+
+      if (this.globalEmotes.has(cleanWord)) {
+        const emoteId = this.globalEmotes.get(cleanWord);
+        // Use Twitch's CDN URL for emote images (1.0 scale)
+        const emoteUrl = `https://static-cdn.jtvnw.net/emoticons/v2/${emoteId}/default/dark/1.0`;
+        return `<img src="${emoteUrl}" alt="${cleanWord}" class="twitch-emote" title="${cleanWord}" data-emote="${cleanWord}">${punctuation}`;
+      }
+
+      return word;
+    });
+
+    return processedWords.join(' ');
+  }
 }
 
-// Note: For full Twitch integration with badges and avatars, you would need:
-// 1. Twitch API client ID
-// 2. User authentication (OAuth)
-// 3. Fetch user data from Twitch API
-// 4. Download badge images from Twitch CDN
 

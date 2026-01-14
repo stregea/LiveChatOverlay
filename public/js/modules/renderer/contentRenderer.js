@@ -164,13 +164,45 @@ function createMessageText(message) {
 
 /**
  * Process message text
- * Converts URLs to clickable links
+ * Converts URLs to clickable links and preserves Twitch emote img tags
  *
- * @param {string} text - Raw message text
+ * @param {string} text - Raw message text (may contain emote img tags from Twitch)
  * @returns {string} Processed HTML
  */
 function processMessageText(text) {
-  // Escape HTML to prevent XSS
+  // Check if text contains Twitch emote img tags
+  const hasTwitchEmotes = text.includes('<img') && text.includes('twitch-emote');
+
+  if (hasTwitchEmotes) {
+    // Split by img tags to preserve them
+    const parts = text.split(/(<img[^>]+class="twitch-emote"[^>]*>)/g);
+
+    // Process each part
+    const processedParts = parts.map(part => {
+      // If it's an img tag, keep it as-is
+      if (part.startsWith('<img') && part.includes('twitch-emote')) {
+        return part;
+      }
+
+      // Otherwise, escape HTML and convert URLs
+      const escaped = part
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+      // Convert URLs to links
+      return escaped.replace(
+        /(https?:\/\/[^\s]+)/g,
+        '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+      );
+    });
+
+    return processedParts.join('');
+  }
+
+  // Original behavior for messages without Twitch emotes
   const escaped = text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
