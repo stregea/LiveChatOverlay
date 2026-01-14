@@ -25,6 +25,33 @@
 let youtubeClient = null;
 let twitchClient = null;
 
+// Message deduplication - track recently seen message IDs
+const processedMessageIds = new Set();
+const MAX_PROCESSED_IDS = 100; // Limit memory usage
+
+/**
+ * Check if message has already been processed
+ * @param {string} messageId - Message ID to check
+ * @returns {boolean} True if message is duplicate
+ */
+function isDuplicateMessage(messageId) {
+  if (processedMessageIds.has(messageId)) {
+    console.log(`⚠️  Skipping duplicate message: ${messageId}`);
+    return true;
+  }
+
+  // Add to processed set
+  processedMessageIds.add(messageId);
+
+  // Prevent memory leak - limit cache size
+  if (processedMessageIds.size > MAX_PROCESSED_IDS) {
+    const firstId = processedMessageIds.values().next().value;
+    processedMessageIds.delete(firstId);
+  }
+
+  return false;
+}
+
 /**
  * Handle incoming WebSocket messages
  * Routes messages to appropriate handlers
@@ -112,6 +139,11 @@ function handlePlatformConnections(platforms) {
  * @param {Object} messageData - Chat message data
  */
 function handleChatMessage(messageData) {
+  // Check for duplicate messages (prevents duplicates when multiple overlay tabs are open)
+  if (messageData.id && isDuplicateMessage(messageData.id)) {
+    return; // Skip duplicate
+  }
+
   const config = OverlayConfigManager.getConfig();
 
   // Log message
